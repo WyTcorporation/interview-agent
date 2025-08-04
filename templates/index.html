@@ -31,6 +31,12 @@
     <h1>🤖 AI Interview Assistant</h1>
 
     <div class="controls">
+        <select id="mode-select" title="Режим відповіді">
+            <option value="short">🔹 Коротко</option>
+            <option value="code">💡 З кодом</option>
+            <option value="hr">👥 Для HR</option>
+            <option value="long">📖 Розгорнуто</option>
+        </select>
         <form id="upload-form">
             <input type="file" id="audio" name="audio" accept="audio/*"/>
             <button type="submit">📤 Надіслати файл</button>

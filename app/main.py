@@ -1,5 +1,5 @@
 import sys
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -124,3 +124,20 @@ async def screen_analyze(req: ScreenImageRequest):
     answer = get_answer_with_image(client, req.prompt, req.image_b64)
     append_log(req.prompt, answer, source="screen")
     return {"question": req.prompt, "answer": answer}
+
+@app.post("/mode")
+async def set_mode(mode: str = Body(...)):
+    global current_mode_prompt
+
+    MODES = {
+        "short": "Коротко, впевнено, як досвідчений інженер.",
+        "code": "Дай коротку відповідь і приклад з коду (якщо доречно).",
+        "hr": "Відповідай простими словами, зрозуміло навіть HR.",
+        "long": "Відповідай розгорнуто, з прикладами і поясненням."
+    }
+
+    if mode in MODES:
+        current_mode_prompt = MODES[mode]
+        return {"status": "ok", "mode": mode}
+    else:
+        return JSONResponse(status_code=400, content={"error": "Невідомий режим"})

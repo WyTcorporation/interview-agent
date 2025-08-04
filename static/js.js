@@ -290,5 +290,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    const modeSelect = document.getElementById("mode-select");
+    modeSelect.addEventListener("change", async () => {
+        const mode = modeSelect.value;
+
+        const res = await fetch("/mode", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(mode)
+        });
+
+        if (res.ok) {
+            console.log("✅ Режим змінено:", mode);
+        } else {
+            alert("❌ Не вдалося змінити режим");
+        }
+    });
 });
 

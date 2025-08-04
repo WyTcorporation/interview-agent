@@ -6,16 +6,17 @@ from PIL import ImageGrab
 
 session_messages = []
 
-system_msg = {
-    "role": "system",
-    "content": (
-        "Ти досвідчений інженер. "
-        "Відповідай лаконічно, впевнено, технічно. "
-        "Не пояснюй як викладач. Не пиши води. "
-        "Можеш використовувати код, якщо доречно."
-    )
-}
 
+current_mode_prompt = "Коротко, впевнено, як досвідчений інженер."
+
+def get_system_prompt():
+    return {
+        "role": "system",
+        "content": (
+            f"Ти AI-асистент. {current_mode_prompt} "
+            "Відповідай на питання користувача."
+        )
+    }
 
 def get_answer(client, question: str) -> str:
     user_msg = {"role": "user", "content": question}
@@ -24,8 +25,8 @@ def get_answer(client, question: str) -> str:
     session_messages.append(user_msg)
 
     # Починаємо prompt з system + останніх N повідомлень (наприклад, 4)
-    context = [system_msg] + session_messages[-4:]
-
+    context = [get_system_prompt()] + session_messages[-4:]
+    print(context)
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=context,
