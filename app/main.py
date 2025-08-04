@@ -1,3 +1,5 @@
+import sys
+
 from fastapi import FastAPI, UploadFile, File, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -66,22 +68,6 @@ async def ask_text(body: TextRequest):
     append_log(question, answer, source="text")
     return JSONResponse({"question": question, "answer": answer})
 
-# @app.post("/ask")
-# async def ask_question(file: UploadFile = File(None), body: TextRequest = Body(None)):
-#     if file:
-#         audio_bytes = await file.read()
-#         question = transcribe_audio(client, audio_bytes)
-#         source = "mic"
-#     elif body and body.text:
-#         question = body.text.strip()
-#         source = "text"
-#     else:
-#         return JSONResponse({"error": "No input provided"}, status_code=400)
-#
-#     answer = get_answer(client, question)
-#     append_log(question, answer, source=source)
-#     return JSONResponse({"question": question, "answer": answer})
-
 @app.post("/reset")
 async def reset_context():
     session_messages.clear()
@@ -100,16 +86,15 @@ async def get_history():
     return JSONResponse(content=[])
 
 
-import subprocess
-
 listener_proc = None
+LISTENER_PATH = str(Path("windows/listener.py").resolve())
 
 @app.post("/listener/start")
 async def start_listener():
     global listener_proc
     if listener_proc and listener_proc.poll() is None:
         return {"status": "already running"}
-    listener_proc = subprocess.Popen(["python", "listener.py"])
+    listener_proc = subprocess.Popen([sys.executable, LISTENER_PATH])
     return {"status": "started"}
 
 @app.post("/listener/stop")

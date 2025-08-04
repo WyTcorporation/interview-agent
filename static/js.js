@@ -117,7 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
             historyContainer.appendChild(block);
         });
-        historyContainer.scrollTop = historyContainer.scrollHeight;
+        // historyContainer.scrollTop = historyContainer.scrollHeight;
     }
 
     const toggleBtn = document.getElementById("theme-toggle");
@@ -230,6 +230,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const listenerBtn = document.getElementById("listener-toggle-btn");
     let listenerProcess = null;
     let isListenerRunning = false;
+    let listenerHistoryInterval = null;
+
+
+    function loadHistory() {
+        fetch("/history")
+            .then(res => res.json())
+            .then((history) => {
+                currentHistory = history;
+                updateHistory(currentHistory);
+            });
+    }
 
     listenerBtn.addEventListener("click", async () => {
         if (!isListenerRunning) {
@@ -239,6 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data.status === "started") {
                 isListenerRunning = true;
                 listenerBtn.textContent = "🟥 Зупинити Listener";
+                listenerHistoryInterval = setInterval(loadHistory, 3000);
             } else {
                 alert("⚠️ Не вдалося запустити listener");
             }
@@ -249,11 +261,20 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data.status === "stopped") {
                 isListenerRunning = false;
                 listenerBtn.textContent = "🎧 Запустити Listener";
+                // 🛑 Зупиняємо інтервал
+                if (listenerHistoryInterval) {
+                    clearInterval(listenerHistoryInterval);
+                    listenerHistoryInterval = null;
+                }
+
+                // Завантажити остаточну історію
+                loadHistory();
             } else {
                 alert("⚠️ Не вдалося зупинити listener");
             }
         }
     });
+
 
 });
 
