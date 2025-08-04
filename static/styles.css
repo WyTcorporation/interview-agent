@@ -1,0 +1,30 @@
+body {
+    display: flex;
+    font-family: sans-serif;
+}
+
+#main {
+    flex: 2;
+    padding: 1em;
+}
+
+#history {
+    flex: 1;
+    border-left: 1px solid #ccc;
+    padding: 1em;
+    background: #f9f9f9;
+}
+
+.block {
+    margin-bottom: 1em;
+}
+
+.q {
+    font-weight: bold;
+    color: #333;
+}
+
+.a {
+    margin-left: 1em;
+    color: #222;
+}

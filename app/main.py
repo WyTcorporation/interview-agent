@@ -5,30 +5,28 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from app.asr import transcribe_audio
-from app.openai_agent import get_answer
-from openai import OpenAI
-import os
+from app.openai_agent import get_answer, session_messages
+from app.config import get_openai_client
 import json
 from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv()
 
 LOG_PATH = Path("history.json")
 LOG_PATH.touch(exist_ok=True)
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+client = get_openai_client()
 
-def append_log(question, answer):
+def append_log(question, answer, source="mic"):
     log = []
     if LOG_PATH.exists():
         try:
             log = json.loads(LOG_PATH.read_text().strip() or "[]")
         except Exception:
             log = []
-    log.append({"question": question, "answer": answer})
+    log.append({
+        "question": question,
+        "answer": answer,
+        "source": source
+    })
     LOG_PATH.write_text(json.dumps(log[-100:], indent=2))  # зберігаємо останні 100
 
 app = FastAPI()
@@ -43,8 +41,6 @@ app.add_middleware(
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-
-
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -54,12 +50,11 @@ async def ask_question(file: UploadFile = File(...)):
     audio_bytes = await file.read()
     question = transcribe_audio(client, audio_bytes)
     answer = get_answer(client, question)
-    append_log(question, answer)
+    append_log(question, answer, source="mic")
     return JSONResponse({"question": question, "answer": answer})
 
 @app.post("/reset")
 async def reset_context():
-    from app.openai_agent import session_messages
     session_messages.clear()
     LOG_PATH.write_text("[]")
     return {"status": "reset"}
