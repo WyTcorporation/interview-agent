@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
         questionEl.innerText = "⌛ Обробка...";
         answerEl.innerText = "";
 
-        fetch("/ask", {
+        fetch("/ask/audio", {
             method: "POST",
             body: formData,
         })
@@ -153,11 +153,21 @@ document.addEventListener("DOMContentLoaded", () => {
         langSelect.value = selectedLang;
     }
 
+    const repeatBtn = document.getElementById("repeat-tts-btn");
+    let lastAnswerSpoken = "";
+
     const ttsBtn = document.getElementById("tts-toggle-btn");
+
     ttsBtn.addEventListener("click", () => {
         ttsEnabled = !ttsEnabled;
         ttsBtn.textContent = ttsEnabled ? "🔈 Не озвучувати" : "🔊 Озвучити";
+        repeatBtn.style.display = ttsEnabled ? "inline-block" : "none";
+
         // speakTextVoices();
+    });
+
+    repeatBtn.addEventListener("click", () => {
+        if (lastAnswerSpoken) speakText(lastAnswerSpoken);
     });
 
     async function getVoice(preferredLang) {
@@ -180,15 +190,70 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function speakText(text) {
         const voice = await getVoice(selectedLang);
-        console.log(voice);
         const utterance = new SpeechSynthesisUtterance(text);
-
         utterance.voice = voice;
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
         window.speechSynthesis.speak(utterance);
+        lastAnswerSpoken = text;
     }
 
+    const sendTextBtn = document.getElementById("send-text-btn");
+    const manualInput = document.getElementById("manual-question");
+
+    sendTextBtn.addEventListener("click", async () => {
+        const text = manualInput.value.trim();
+        if (!text) return;
+
+        questionEl.innerText = text;
+        answerEl.innerText = "⌛ Обробка...";
+
+        const response = await fetch("/ask/text", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({text})
+        });
+
+        const data = await response.json();
+        answerEl.innerText = data.answer;
+        if (ttsEnabled) await speakText(data.answer);
+
+        currentHistory.push({question: text, answer: data.answer});
+        updateHistory(currentHistory);
+
+        manualInput.value = "";
+    });
+
+
+    const listenerBtn = document.getElementById("listener-toggle-btn");
+    let listenerProcess = null;
+    let isListenerRunning = false;
+
+    listenerBtn.addEventListener("click", async () => {
+        if (!isListenerRunning) {
+            // Запуск listener через бекенд
+            const res = await fetch("/listener/start", {method: "POST"});
+            const data = await res.json();
+            if (data.status === "started") {
+                isListenerRunning = true;
+                listenerBtn.textContent = "🟥 Зупинити Listener";
+            } else {
+                alert("⚠️ Не вдалося запустити listener");
+            }
+        } else {
+            // Зупинка listener
+            const res = await fetch("/listener/stop", {method: "POST"});
+            const data = await res.json();
+            if (data.status === "stopped") {
+                isListenerRunning = false;
+                listenerBtn.textContent = "🎧 Запустити Listener";
+            } else {
+                alert("⚠️ Не вдалося зупинити listener");
+            }
+        }
+    });
 
 });
 

@@ -7,7 +7,7 @@ import json
 
 output_dir = "../input_audio"
 os.makedirs(output_dir, exist_ok=True)
-API_URL = "http://localhost:8000/ask"  # або інший порт, якщо змінив
+API_URL = "http://localhost:8000/ask/audio"  # або інший порт, якщо змінив
 
 # Отримуємо список хост-API (для перетворення індексу на назву)
 hostapis = sd.query_hostapis()
