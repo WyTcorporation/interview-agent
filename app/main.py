@@ -169,3 +169,27 @@ async def stop_mic_listener():
         mic_listener_proc = None
         return {"status": "stopped"}
     return {"status": "not running"}
+
+OVERLAY_PATH = str(Path("windows/overlay.py").resolve())
+@app.post("/overlay", response_class=HTMLResponse)
+async def start_overlay():
+    subprocess.Popen([sys.executable, OVERLAY_PATH])
+    return {"status": "started"}
+
+OVERLAY_LISTENER_PATH = str(Path("windows/overlay_listener.py").resolve())
+
+@app.post("/overlay/listener")
+async def start_overlay_listener():
+    subprocess.Popen([sys.executable, OVERLAY_LISTENER_PATH])
+    return {"status": "started"}
+
+@app.get("/latest")
+async def get_latest():
+    if LOG_PATH.exists():
+        try:
+            log = json.loads(LOG_PATH.read_text().strip() or "[]")
+            if log:
+                return {"question": log[-1]["question"], "answer": log[-1]["answer"]}
+        except Exception:
+            pass
+    return {"question": "", "answer": "❌ Немає відповіді"}

@@ -15,6 +15,11 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 # Windows Слухає екран
  python windows\listener.py
 
+# Екраний помічник аудіо
+python windows/overlay.py
+F9 
+
+
 Teams не спрацював
 Треба перевірити налаштування  Teams
 В Slack запрацювало коли я колонки прибрав і поставив CABLE Output

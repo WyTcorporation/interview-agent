@@ -355,6 +355,25 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+        document.getElementById("overlay-btn").addEventListener("click", async () => {
+        const res = await fetch("/overlay", {method: "POST"});
+        if (res.ok) {
+            console.log("🪟 Overlay запущено");
+        } else {
+            // alert("❌ Не вдалося запустити overlay");
+             console.log("❌ Не вдалося запустити overlay");
+        }
+    });
+
+    document.getElementById("overlay-listener-btn").addEventListener("click", async () => {
+        const res = await fetch("/overlay/listener", {method: "POST"});
+        if (res.ok) {
+            console.log("🪟 Overlay Listener запущено");
+        } else {
+            alert("❌ Не вдалося запустити overlay");
+        }
+    });
+
     setInterval(() => {
         fetch("/history")
             .then(res => res.json())
