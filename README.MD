@@ -19,6 +19,12 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 python windows/overlay.py
 F9 
 
+windows/overlay_experiment.py
+У тебе одночасно:
+self.root.attributes("-alpha", 0.85) — Tkinter-прозорість
+і SetLayeredWindowAttributes(...) — WinAPI-прозорість
+і WS_EX_TRANSPARENT — робить вікно повністю неклікабельним + іноді повністю невидимим
+overrideredirect(True) ховає з alt+tab
 
 Teams не спрацював
 Треба перевірити налаштування  Teams
