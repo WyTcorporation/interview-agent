@@ -1,33 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <title>AI Interview Agent</title>
-  <link rel="stylesheet" href="/static/styles.css">
-  <script src="/static/js.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Interview Assistant</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <style>
+    .theme-toggle {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      background: none;
+      border: none;
+      color: var(--text);
+    }
+  </style>
 </head>
 <body>
-  <h1>AI Interview Assistant</h1>
-  <button id="resetBtn">🧹 Очистити контекст</button>
+  <button class="theme-toggle" id="theme-toggle" title="Змінити тему">🌙</button>
+  <select id="voice-lang-select" title="Оберіть мову озвучення">
+    <option value="uk-UA">🇺🇦 Українська</option>
+    <option value="ru-RU">🇷🇺 Російська</option>
+    <option value="pl-PL">🇵🇱 Польська</option>
+    <option value="en-US">🇺🇸 Англійська</option>
+  </select>
 
   <div class="container">
-    <div class="left">
-      <form id="uploadForm">
-        <label for="audioInput">🎤 Ask</label>
-        <input type="file" id="audioInput" name="file" accept="audio/*" required>
-        <button type="submit">Надіслати</button>
-      </form>
+    <h1>🤖 AI Interview Assistant</h1>
 
-      <div id="answerBox" class="card" style="display: none">
-        <h3>🧠 Answer</h3>
-        <div id="answerText"></div>
-      </div>
+    <div class="controls">
+      <form id="upload-form">
+        <input type="file" id="audio" name="audio" accept="audio/*"/>
+        <button type="submit">📤 Надіслати файл</button>
+      </form>
+      <button id="record-btn">🎤 Запис</button>
+      <button id="reset-btn">🗑 Очистити контекст</button>
+      <button id="tts-toggle-btn">🔊 Озвучити</button>
     </div>
 
-    <div class="right">
+    <div class="qa-display">
+      <p><strong>🧠 Q:</strong> <span id="question-text"></span></p>
+      <p><strong>💬 A:</strong> <span id="answer-text"></span></p>
+    </div>
+
+    <div class="history-section">
       <h2>📜 Історія</h2>
-      <div id="chatHistory"></div>
+      <div id="history-list" class="history-list"></div>
     </div>
   </div>
+
+  <script src="/static/js.js"></script>
 </body>
 </html>
