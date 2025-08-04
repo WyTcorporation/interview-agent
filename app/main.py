@@ -141,3 +141,24 @@ async def set_mode(mode: str = Body(...)):
         return {"status": "ok", "mode": mode}
     else:
         return JSONResponse(status_code=400, content={"error": "Невідомий режим"})
+
+
+MIC_LISTENER_PATH = str(Path("windows/mic_listener.py").resolve())
+mic_listener_proc = None
+
+@app.post("/mic/start")
+async def start_mic_listener():
+    global mic_listener_proc
+    if mic_listener_proc and mic_listener_proc.poll() is None:
+        return {"status": "already running"}
+    mic_listener_proc = subprocess.Popen([sys.executable, MIC_LISTENER_PATH])
+    return {"status": "started"}
+
+@app.post("/mic/stop")
+async def stop_mic_listener():
+    global mic_listener_proc
+    if mic_listener_proc and mic_listener_proc.poll() is None:
+        mic_listener_proc.terminate()
+        mic_listener_proc = None
+        return {"status": "stopped"}
+    return {"status": "not running"}

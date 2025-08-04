@@ -64,6 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
     recordBtn.addEventListener("mouseup", stopRecording);
 
     function startRecording() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            answerEl.innerText = "⚠️ Браузер не підтримує мікрофон або доступ заборонено.";
+            return;
+        }
+
         navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => {
             audioChunks = [];
             mediaRecorder = new MediaRecorder(stream);
@@ -71,6 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
             mediaRecorder.onstop = sendRecording;
             mediaRecorder.start();
             recordBtn.innerText = "🎙️ Запис...";
+        }).catch((err) => {
+            answerEl.innerText = "❌ Доступ до мікрофона заборонено.";
+            console.error("getUserMedia error:", err);
         });
     }
 
@@ -306,5 +314,45 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("❌ Не вдалося змінити режим");
         }
     });
+
+    const micBtn = document.getElementById("mic-listener-toggle-btn");
+    let isMicRunning = false;
+    let micInterval = null;
+
+    micBtn.addEventListener("click", async () => {
+        if (!isMicRunning) {
+            const res = await fetch("/mic/start", {method: "POST"});
+            const data = await res.json();
+            if (data.status === "started") {
+                isMicRunning = true;
+                micBtn.textContent = "🟥 Зупинити мікрофон";
+                micInterval = setInterval(loadHistory, 3000);
+            } else {
+                alert("❌ Не вдалося запустити mic_listener");
+            }
+        } else {
+            const res = await fetch("/mic/stop", {method: "POST"});
+            const data = await res.json();
+            if (data.status === "stopped") {
+                isMicRunning = false;
+                micBtn.textContent = "🎙️ Live з мікрофона";
+                clearInterval(micInterval);
+            } else {
+                alert("❌ Не вдалося зупинити mic_listener");
+            }
+        }
+    });
+
+    setInterval(() => {
+        fetch("/history")
+            .then(res => res.json())
+            .then((history) => {
+                // Якщо нова історія відрізняється — оновити
+                if (JSON.stringify(history) !== JSON.stringify(currentHistory)) {
+                    currentHistory = history;
+                    updateHistory(currentHistory);
+                }
+            });
+    }, 3000); // кожні 3 секунди
 });
 

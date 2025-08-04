@@ -26,7 +26,7 @@ def get_answer(client, question: str) -> str:
 
     # Починаємо prompt з system + останніх N повідомлень (наприклад, 4)
     context = [get_system_prompt()] + session_messages[-4:]
-    print(context)
+
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=context,
