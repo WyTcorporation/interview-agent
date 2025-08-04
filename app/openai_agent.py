@@ -7,7 +7,7 @@ from PIL import ImageGrab
 session_messages = []
 
 
-current_mode_prompt = "Коротко, впевнено, як досвідчений інженер."
+current_mode_prompt = "Дай коротку відповідь і приклад з коду (якщо доречно)."
 
 def get_system_prompt():
     return {

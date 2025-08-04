@@ -3,52 +3,81 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <title>AI Interview Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Підсвітка коду -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
     <link rel="stylesheet" href="/static/styles.css"/>
 </head>
 <body>
-<button class="theme-toggle" id="theme-toggle" title="Змінити тему">🌙</button>
-<select id="voice-lang-select" title="Оберіть мову озвучення">
-    <option value="uk-UA">🇺🇦 Українська</option>
-    <option value="ru-RU">🇷🇺 Російська</option>
-    <option value="pl-PL">🇵🇱 Польська</option>
-    <option value="en-US">🇺🇸 Англійська</option>
-</select>
-
 <div class="container">
-    <h1>🤖 AI Interview Assistant</h1>
-
-    <div class="controls">
+    <div class="header-controls">
         <select id="mode-select" title="Режим відповіді">
             <option value="short">🔹 Коротко</option>
             <option value="code">💡 З кодом</option>
             <option value="hr">👥 Для HR</option>
             <option value="long">📖 Розгорнуто</option>
         </select>
-        <form id="upload-form">
-            <input type="file" id="audio" name="audio" accept="audio/*"/>
-            <button type="submit">📤 Надіслати файл</button>
-        </form>
-        <button id="record-btn">🎤 Запис</button>
-        <button id="reset-btn">🗑 Очистити контекст</button>
-        <button id="tts-toggle-btn">🔊 Озвучити</button>
-        <button id="repeat-tts-btn" style="display: none;">🔁 Повторити голосом</button>
-        <hr/>
-        <input type="text" id="manual-question" placeholder="Введіть своє питання..."/>
-        <button id="send-text-btn">📨 Відправити текст</button>
-        <button id="listener-toggle-btn">🎧 Запустити Listener</button>
-        <button id="mic-listener-toggle-btn">🎙️ Live з мікрофона</button>
-        <button id="screen-analyze-btn">👀 Аналіз екрана</button>
+        <select id="voice-lang-select" title="Оберіть мову озвучення">
+            <option value="uk-UA">🇺🇦 Українська</option>
+            <option value="ru-RU">🇷🇺 Російська</option>
+            <option value="pl-PL">🇵🇱 Польська</option>
+            <option value="en-US">🇺🇸 Англійська</option>
+        </select>
+        <button class="theme-toggle" id="theme-toggle" title="Змінити тему">🌙</button>
     </div>
+    <h1>🤖 AI Interview Assistant</h1>
+    <div class="layout-grid">
+        <div class="left-panel">
+            <!-- 🎛 КОНТРОЛІ -->
+            <div class="controls">
+                <div class="controls-group">
+                    <!-- 📩 Текст + відправка -->
+                    <textarea id="manual-question" placeholder="Введіть своє питання..."></textarea>
+                    <div class="row">
+                        <form id="upload-form">
+                            <button type="button" id="send-text-btn">📨 Відправити текст</button>
+                            <input type="file" id="audio" name="audio" accept="audio/*" style="display: none;">
+                            <button type="submit">📤 Надіслати файл</button>
+                        </form>
+                    </div>
+                </div>
 
-    <div class="qa-display">
-        <p><strong>🧠 Q:</strong> <span id="question-text"></span></p>
-        <p><strong>💬 A:</strong> <span id="answer-text"></span></p>
-    </div>
+                <div class="controls-group">
+                    <!-- 🎤 Аудіо -->
+                    <button id="record-btn">🎤 Запис</button>
+                    <button id="tts-toggle-btn">🔊 Озвучити</button>
+                    <button id="repeat-tts-btn" style="display: none;">🔁 Повторити голосом</button>
+                </div>
 
-    <div class="history-section">
-        <h2>📜 Історія</h2>
-        <div id="history-list" class="history-list"></div>
+                <div class="controls-group">
+                    <!-- 🔁 Live режими -->
+                    <button id="listener-toggle-btn">🎧 Запустити Listener</button>
+                    <button id="mic-listener-toggle-btn">🎙️ Live з мікрофона</button>
+                </div>
+
+                <div class="controls-group">
+                    <!-- 🛠 Інше -->
+                    <button id="screen-analyze-btn">👁 Аналіз екрана</button>
+                    <button id="reset-btn">🗑 Очистити контекст</button>
+                </div>
+            </div>
+
+            <div class="qa-display">
+                <p><strong>🧠 Q:</strong> <span id="question-text"></span></p>
+                <p><strong>💬 A:</strong> <span id="answer-text"></span></p>
+            </div>
+        </div>
+        <div class="right-panel">
+            <!-- 📜 ІСТОРІЯ -->
+            <div class="history-section">
+                <h2>📜 Історія</h2>
+                <div id="history-list" class="history-list"></div>
+            </div>
+        </div>
     </div>
 </div>
 

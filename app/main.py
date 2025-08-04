@@ -48,9 +48,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-
-class TextRequest(BaseModel):
-    text: str
+@app.post("/ask/file")
+async def ask_audio(file: UploadFile = File(...)):
+    audio_bytes = await file.read()
+    question = transcribe_audio(client, audio_bytes)
+    answer = get_answer(client, question)
+    append_log(question, answer, source="mic")
+    return JSONResponse({"question": question, "answer": answer})
 
 @app.post("/ask/audio")
 async def ask_audio(file: UploadFile = File(...)):
@@ -59,6 +63,9 @@ async def ask_audio(file: UploadFile = File(...)):
     answer = get_answer(client, question)
     append_log(question, answer, source="mic")
     return JSONResponse({"question": question, "answer": answer})
+
+class TextRequest(BaseModel):
+    text: str
 
 @app.post("/ask/text")
 async def ask_text(body: TextRequest):

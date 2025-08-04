@@ -11,6 +11,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let audioChunks = [];
     let currentHistory = [];
 
+    function renderAnswerMarkdown(rawText) {
+        const answerHtml = marked.parse(rawText || "");
+        answerEl.innerHTML = `<div class="rendered-answer">${answerHtml}</div>`;
+        answerEl.querySelectorAll("pre code").forEach((el) => {
+            hljs.highlightElement(el);
+        });
+    }
+
     // Завантажити історію при старті
     fetch("/history")
         .then((res) => res.json())
@@ -46,14 +54,14 @@ document.addEventListener("DOMContentLoaded", () => {
         questionEl.innerText = "⌛ Обробка...";
         answerEl.innerText = "";
 
-        const response = await fetch("/ask", {
+        const response = await fetch("/ask/file", {
             method: "POST",
             body: formData,
         });
 
         const data = await response.json();
         questionEl.innerText = data.question;
-        answerEl.innerText = data.answer;
+        renderAnswerMarkdown(data.answer);
 
         currentHistory.push({question: data.question, answer: data.answer});
         updateHistory(currentHistory);
@@ -107,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .then((res) => res.json())
             .then((data) => {
                 questionEl.innerText = data.question;
-                answerEl.innerText = data.answer;
+                renderAnswerMarkdown(data.answer);
                 if (ttsEnabled) speakText(data.answer);
                 currentHistory.push({question: data.question, answer: data.answer});
                 updateHistory(currentHistory);
@@ -118,15 +126,19 @@ document.addEventListener("DOMContentLoaded", () => {
         historyContainer.innerHTML = "";
         [...history].reverse().forEach((entry) => {
             const block = document.createElement("div");
+            const answerHtml = marked.parse(entry.answer || "");
             block.classList.add("history-entry");
             block.innerHTML = `
-        <div><strong>Q:</strong> ${entry.question}</div>
-        <div><strong>A:</strong> ${entry.answer}</div>
-      `;
+          <div><strong>Q:</strong> ${entry.question}</div>
+          <div><strong>A:</strong><div class="rendered-answer">${answerHtml}</div></div>
+        `;
+            block.querySelectorAll("pre code").forEach((el) => {
+                hljs.highlightElement(el);
+            });
             historyContainer.appendChild(block);
         });
-        // historyContainer.scrollTop = historyContainer.scrollHeight;
     }
+
 
     const toggleBtn = document.getElementById("theme-toggle");
 
@@ -225,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const data = await response.json();
-        answerEl.innerText = data.answer;
+        renderAnswerMarkdown(data.answer);
         if (ttsEnabled) await speakText(data.answer);
 
         currentHistory.push({question: text, answer: data.answer});
