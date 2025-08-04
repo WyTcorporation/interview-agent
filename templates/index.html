@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interview Agent</title>
+    <style>
+        body {
+            display: flex;
+            font-family: sans-serif;
+        }
+
+        #main {
+            flex: 2;
+            padding: 1em;
+        }
+
+        #history {
+            flex: 1;
+            border-left: 1px solid #ccc;
+            padding: 1em;
+            background: #f9f9f9;
+        }
+
+        .block {
+            margin-bottom: 1em;
+        }
+
+        .q {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .a {
+            margin-left: 1em;
+            color: #222;
+        }
+    </style>
+</head>
+<body>
+<div id="main">
+    <h1>AI Interview Assistant</h1>
+    <button onclick="recordAndSend()">🎤 Ask</button>
+    <button onclick="resetContext()">🧹 Очистити контекст</button>
+    <p><strong>Question:</strong> <span id="question"></span></p>
+    <p><strong>Answer:</strong> <span id="answer"></span></p>
+</div>
+<div id="history" style="max-height: 400px; overflow-y: scroll; border: 1px solid #ddd; padding: 10px;">
+    <h3>🧠 Історія діалогу:</h3>
+    <ul id="log"></ul>
+</div>
+<script src="/static/js.js"></script>
+</body>
+</html>

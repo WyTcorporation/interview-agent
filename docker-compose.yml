@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  interview-agent:
+    container_name: interview-agent
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+
+#  interview-agent-listener:
+#    container_name: interview-agent-listener
+#    build:
+#      context: ./listener
+#      dockerfile: Dockerfile
+#    volumes:
+#      - ./input_audio:/app/input_audio
+#    env_file:
+#      - .env
+#    depends_on:
+#      - interview-agent
+
