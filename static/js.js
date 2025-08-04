@@ -275,6 +275,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    const screenBtn = document.getElementById("screen-analyze-btn");
+
+    screenBtn.addEventListener("click", async () => {
+        const res = await fetch("/screen/run", {
+            method: "POST"
+        });
+
+        if (res.ok) {
+            // почекаємо кілька секунд, поки screen.py зробить свій запит
+            setTimeout(loadHistory, 30000);
+        } else {
+            alert("❌ Не вдалося запустити screen.py");
+        }
+    });
 
 });
 

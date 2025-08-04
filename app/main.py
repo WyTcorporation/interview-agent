@@ -1,13 +1,12 @@
 import sys
-
-from fastapi import FastAPI, UploadFile, File, Body
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from app.asr import transcribe_audio
-from app.openai_agent import get_answer, session_messages
+from app.openai_agent import get_answer, session_messages, get_answer_with_image, capture_screenshot_b64
 from app.config import get_openai_client
 import json
 from pathlib import Path
@@ -105,3 +104,23 @@ async def stop_listener():
         listener_proc = None
         return {"status": "stopped"}
     return {"status": "not running"}
+
+class ScreenRequest(BaseModel):
+    prompt: str
+
+SCREEN_PATH = str(Path("windows/screen.py").resolve())
+
+@app.post("/screen/run")
+async def run_screen_tool():
+    subprocess.Popen([sys.executable, SCREEN_PATH])
+    return {"status": "started"}
+
+class ScreenImageRequest(BaseModel):
+    image_b64: str
+    prompt: str
+
+@app.post("/screen/analyze")
+async def screen_analyze(req: ScreenImageRequest):
+    answer = get_answer_with_image(client, req.prompt, req.image_b64)
+    append_log(req.prompt, answer, source="screen")
+    return {"question": req.prompt, "answer": answer}

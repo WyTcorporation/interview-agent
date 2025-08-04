@@ -1,61 +1,62 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Interview Assistant</title>
-  <link rel="stylesheet" href="/static/styles.css"/>
-  <style>
-    .theme-toggle {
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      cursor: pointer;
-      font-size: 1.2rem;
-      background: none;
-      border: none;
-      color: var(--text);
-    }
-  </style>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>AI Interview Assistant</title>
+    <link rel="stylesheet" href="/static/styles.css"/>
+    <style>
+        .theme-toggle {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            background: none;
+            border: none;
+            color: var(--text);
+        }
+    </style>
 </head>
 <body>
-  <button class="theme-toggle" id="theme-toggle" title="Змінити тему">🌙</button>
-  <select id="voice-lang-select" title="Оберіть мову озвучення">
+<button class="theme-toggle" id="theme-toggle" title="Змінити тему">🌙</button>
+<select id="voice-lang-select" title="Оберіть мову озвучення">
     <option value="uk-UA">🇺🇦 Українська</option>
     <option value="ru-RU">🇷🇺 Російська</option>
     <option value="pl-PL">🇵🇱 Польська</option>
     <option value="en-US">🇺🇸 Англійська</option>
-  </select>
+</select>
 
-  <div class="container">
+<div class="container">
     <h1>🤖 AI Interview Assistant</h1>
 
     <div class="controls">
-      <form id="upload-form">
-        <input type="file" id="audio" name="audio" accept="audio/*"/>
-        <button type="submit">📤 Надіслати файл</button>
-      </form>
-      <button id="record-btn">🎤 Запис</button>
-      <button id="reset-btn">🗑 Очистити контекст</button>
-      <button id="tts-toggle-btn">🔊 Озвучити</button>
-      <button id="repeat-tts-btn" style="display: none;">🔁 Повторити голосом</button>
-      <hr />
-      <input type="text" id="manual-question" placeholder="Введіть своє питання..." />
-      <button id="send-text-btn">📨 Відправити текст</button>
-      <button id="listener-toggle-btn">🎧 Запустити Listener</button>
+        <form id="upload-form">
+            <input type="file" id="audio" name="audio" accept="audio/*"/>
+            <button type="submit">📤 Надіслати файл</button>
+        </form>
+        <button id="record-btn">🎤 Запис</button>
+        <button id="reset-btn">🗑 Очистити контекст</button>
+        <button id="tts-toggle-btn">🔊 Озвучити</button>
+        <button id="repeat-tts-btn" style="display: none;">🔁 Повторити голосом</button>
+        <hr/>
+        <input type="text" id="manual-question" placeholder="Введіть своє питання..."/>
+        <button id="send-text-btn">📨 Відправити текст</button>
+        <button id="listener-toggle-btn">🎧 Запустити Listener</button>
+        <button id="screen-analyze-btn">👀 Аналіз екрана</button>
     </div>
 
     <div class="qa-display">
-      <p><strong>🧠 Q:</strong> <span id="question-text"></span></p>
-      <p><strong>💬 A:</strong> <span id="answer-text"></span></p>
+        <p><strong>🧠 Q:</strong> <span id="question-text"></span></p>
+        <p><strong>💬 A:</strong> <span id="answer-text"></span></p>
     </div>
 
     <div class="history-section">
-      <h2>📜 Історія</h2>
-      <div id="history-list" class="history-list"></div>
+        <h2>📜 Історія</h2>
+        <div id="history-list" class="history-list"></div>
     </div>
-  </div>
+</div>
 
-  <script src="/static/js.js"></script>
+<script src="/static/js.js"></script>
 </body>
 </html>
