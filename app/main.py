@@ -132,23 +132,25 @@ async def screen_analyze(req: ScreenImageRequest):
     append_log(req.prompt, answer, source="screen")
     return {"question": req.prompt, "answer": answer}
 
+PROMPTS_PATH = Path("app/prompts.json")
+
+def load_prompts():
+    try:
+        return json.loads(PROMPTS_PATH.read_text(encoding="utf-8"))
+    except Exception as e:
+        print("❌ Помилка при завантаженні prompts.json:", e)
+        return {}
 @app.post("/mode")
 async def set_mode(mode: str = Body(...)):
     global current_mode_prompt
 
-    MODES = {
-        "short": "Коротко, впевнено, як досвідчений інженер.",
-        "code": "Дай коротку відповідь і приклад з коду (якщо доречно).",
-        "hr": "Відповідай простими словами, зрозуміло навіть HR.",
-        "long": "Відповідай розгорнуто, з прикладами і поясненням."
-    }
+    prompts = load_prompts()
 
-    if mode in MODES:
-        current_mode_prompt = MODES[mode]
+    if mode in prompts:
+        current_mode_prompt = prompts[mode]
         return {"status": "ok", "mode": mode}
     else:
         return JSONResponse(status_code=400, content={"error": "Невідомий режим"})
-
 
 MIC_LISTENER_PATH = str(Path("windows/mic_listener.py").resolve())
 mic_listener_proc = None
