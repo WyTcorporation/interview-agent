@@ -7,6 +7,9 @@ from PIL import Image
 
 API_URL = "http://localhost:8000/screen/analyze"
 
+system_prompt = "Ти — технічний співбесідник.Проаналізуй цю частину екрана. Якщо бачиш на екрані питання (тестове або програмне), коротко дай відповідь і поясни чому. Якщо є варіанти — вибери правильний."
+
+
 class ScreenTool:
     def __init__(self):
         self.root = tk.Tk()
@@ -39,7 +42,7 @@ class ScreenTool:
         try:
             res = requests.post(API_URL, json={
                 "image_b64": img_b64,
-                "prompt": "Проаналізуй цю частину екрана"
+                "prompt":system_prompt
             })
 
             if res.ok:

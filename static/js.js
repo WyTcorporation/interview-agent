@@ -14,9 +14,11 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderAnswerMarkdown(rawText) {
         const answerHtml = marked.parse(rawText || "");
         answerEl.innerHTML = `<div class="rendered-answer">${answerHtml}</div>`;
-        answerEl.querySelectorAll("pre code").forEach((el) => {
-            hljs.highlightElement(el);
-        });
+        if (typeof hljs !== "undefined") {
+            answerEl.querySelectorAll("pre code").forEach((el) => {
+                hljs.highlightElement(el);
+            });
+        }
     }
 
     // Завантажити історію при старті
@@ -132,9 +134,11 @@ document.addEventListener("DOMContentLoaded", () => {
           <div><strong>Q:</strong> ${entry.question}</div>
           <div><strong>A:</strong><div class="rendered-answer">${answerHtml}</div></div>
         `;
-            block.querySelectorAll("pre code").forEach((el) => {
-                hljs.highlightElement(el);
-            });
+             if (typeof hljs !== "undefined") {
+                 block.querySelectorAll("pre code").forEach((el) => {
+                     hljs.highlightElement(el);
+                 });
+             }
             historyContainer.appendChild(block);
         });
     }
@@ -355,13 +359,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-        document.getElementById("overlay-btn").addEventListener("click", async () => {
+    document.getElementById("overlay-btn").addEventListener("click", async () => {
         const res = await fetch("/overlay", {method: "POST"});
         if (res.ok) {
             console.log("🪟 Overlay запущено");
         } else {
             // alert("❌ Не вдалося запустити overlay");
-             console.log("❌ Не вдалося запустити overlay");
+            console.log("❌ Не вдалося запустити overlay");
         }
     });
 

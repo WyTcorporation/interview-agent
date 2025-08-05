@@ -7,14 +7,16 @@ import os
 import uuid
 import keyboard
 import pyttsx3
+import time
+import numpy as np
 
 API_URL = "http://localhost:8000/ask/audio"
-DURATION = 4
 SAMPLERATE = 16000
+CHANNELS = 1
 
 # ✨ ОБЕРИ свою мову і голос:
 LANG_CODE = "ru"  # або 'en', 'pl', 'ru' і т.д.
-VOICE_NAME = "Irina"   # залиш порожнім, щоб вибрати перший голос з цією мовою
+VOICE_NAME = "Irina"
 
 class OverlayAssistant:
     def __init__(self):
@@ -30,8 +32,7 @@ class OverlayAssistant:
         self.engine = pyttsx3.init()
         self.voice = self.pick_voice(LANG_CODE, VOICE_NAME)
 
-        # UI
-        self.text_label = tk.Label(self.root, text="🤖 Готовий (F9 – слухати)", font=("Segoe UI", 11),
+        self.text_label = tk.Label(self.root, text="🎙 Тримай F9 щоб говорити | Ctrl+F9 — озвучити", font=("Segoe UI", 11),
                                    bg="black", fg="lime", wraplength=300, justify="left")
         self.text_label.pack(padx=10, pady=(10, 5))
 
@@ -50,7 +51,10 @@ class OverlayAssistant:
         self.root.bind("<B1-Motion>", self.do_move)
 
         self.last_answer = ""
-        threading.Thread(target=self.listen_hotkeys, daemon=True).start()
+        self.recording = False
+        self.audio_frames = []
+
+        threading.Thread(target=self.listen_hotkey_loop, daemon=True).start()
 
         self.root.geometry("+60+60")
 
@@ -58,21 +62,12 @@ class OverlayAssistant:
         voices = self.engine.getProperty("voices")
         matched = []
         for v in voices:
-            # Безпечна обробка мов
             langs = v.languages[0] if isinstance(v.languages[0], str) else v.languages[0].decode(errors="ignore")
             if lang_code.lower() in langs.lower() or lang_code.lower() in v.id.lower():
                 matched.append(v)
-
         if voice_name:
             matched = [v for v in matched if voice_name.lower() in v.name.lower()]
-
-        if matched:
-            voice = matched[0]
-            print(f"✅ Обрано голос: {voice.name} | {voice.id}")
-            return voice
-        else:
-            print("⚠️ Голос не знайдено — використано стандартний")
-            return self.engine.getProperty("voice")
+        return matched[0] if matched else self.engine.getProperty("voice")
 
     def speak_text(self):
         if not self.last_answer:
@@ -82,20 +77,49 @@ class OverlayAssistant:
         self.engine.say(self.last_answer)
         self.engine.runAndWait()
 
-    def listen_hotkeys(self):
-        keyboard.add_hotkey("F9", self.capture_audio)
+    def listen_hotkey_loop(self):
+        self.text_label.config(text="🎙 Тримай F9 щоб говорити | Ctrl+F9 — озвучити")
         keyboard.add_hotkey("ctrl+F9", self.speak_text)
-        self.text_label.config(text="🎙 Натисни F9 щоб спитати | Ctrl+F9 — озвучити")
-        keyboard.wait()
 
-    def capture_audio(self):
-        self.text_label.config(text="🔴 Записую...")
+        while True:
+            keyboard.wait("F9")
+            self.start_recording()
+            while keyboard.is_pressed("F9"):
+                time.sleep(0.1)
+            self.stop_and_send()
+
+    def start_recording(self):
+        if self.recording:
+            return
+        self.text_label.config(text="🔴 Запис активний... Відпустіть F9 щоб відправити")
+        self.root.lift()  # Повертаємо overlay поверх, навіть якщо він загубився
+        self.root.update()
+        self.audio_frames = []
+        self.recording = True
+        threading.Thread(target=self._record_loop, daemon=True).start()
+
+    def _record_loop(self):
+        with sd.InputStream(samplerate=SAMPLERATE, channels=CHANNELS, dtype='int16', callback=self.audio_callback):
+            while self.recording:
+                time.sleep(0.1)
+
+    def audio_callback(self, indata, frames, time_info, status):
+        self.audio_frames.append(indata.copy())
+
+    def stop_and_send(self):
+        if not self.recording:
+            return
+        self.recording = False
+        self.text_label.config(text="⏳ Обробка...")
         self.root.update()
 
+        if not self.audio_frames:
+            self.text_label.config(text="⚠️ Нічого не записано")
+            return
+
+        audio_np = np.concatenate(self.audio_frames, axis=0)
         filename = f"temp_{uuid.uuid4().hex}.wav"
-        audio = sd.rec(int(DURATION * SAMPLERATE), samplerate=SAMPLERATE, channels=1, dtype='int16')
-        sd.wait()
-        sf.write(filename, audio, SAMPLERATE)
+        sf.write(filename, audio_np, samplerate=SAMPLERATE)
 
         try:
             with open(filename, "rb") as f:
@@ -104,14 +128,14 @@ class OverlayAssistant:
                 self.last_answer = response.json().get("answer", "🤖 Нема відповіді")
                 self.text_label.config(text=f"🧠 {self.last_answer}")
             else:
-                self.text_label.config(text=f"❌ {response.status_code}")
+                self.text_label.config(text=f"❌ Статус: {response.status_code}")
         except Exception as e:
             self.text_label.config(text=f"⚠️ Помилка: {e}")
         finally:
             if os.path.exists(filename):
                 os.remove(filename)
 
-        self.root.after(10000, lambda: self.text_label.config(text="🎙 Натисни F9 щоб спитати | Ctrl+F9 — озвучити"))
+        # self.root.after(10000, lambda: self.text_label.config(text="🎙 Тримай F9 щоб говорити | Ctrl+F9 — озвучити"))
 
     def start_move(self, event):
         self.offset_x = event.x

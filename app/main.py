@@ -115,7 +115,7 @@ async def stop_listener():
 class ScreenRequest(BaseModel):
     prompt: str
 
-SCREEN_PATH = str(Path("windows/screen.py").resolve())
+SCREEN_PATH = str(Path("windows/screen_headless.py").resolve())
 
 @app.post("/screen/run")
 async def run_screen_tool():
