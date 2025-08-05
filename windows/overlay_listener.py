@@ -3,6 +3,8 @@ import requests
 import threading
 import time
 
+# Цей клас для зображення останньої відповіді у вигляді програми поверх усіх вікон
+
 class OverlayListener:
     def __init__(self):
         self.root = tk.Tk()

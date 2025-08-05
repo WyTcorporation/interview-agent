@@ -10,6 +10,8 @@ os.makedirs(output_dir, exist_ok=True)
 
 API_URL = "http://localhost:8000/ask/audio"
 
+# Ці функції для постійного прослуховування мікрофона
+
 def record_audio(duration=4, samplerate=16000):
     print("🎙️  Запис з мікрофона...")
     audio = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1, dtype='int16')

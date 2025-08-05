@@ -9,6 +9,8 @@ output_dir = "../input_audio"
 os.makedirs(output_dir, exist_ok=True)
 API_URL = "http://localhost:8000/ask/audio"  # або інший порт, якщо змінив
 
+# Ці функції для постійного прослуховування колонок/екрану
+
 # Отримуємо список хост-API (для перетворення індексу на назву)
 hostapis = sd.query_hostapis()
 devices = sd.query_devices()

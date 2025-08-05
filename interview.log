@@ -1735,4 +1735,83 @@ main() функція:
   - Вхідні дані формуються як список, де кожен елемент містить назву функції та її аргументи.
   - Результати обчислень функцій виводяться для кожного тестового випадку на основі вхідних даних.
 
-Якщо ви маєте на увазі конкретну третю функцію, якої немає в наданому прикладі, або якщо вам потрібне її додавання, будь ласка, уточніть деталі.\n\n
+Якщо ви маєте на увазі конкретну третю функцію, якої немає в наданому прикладі, або якщо вам потрібне її додавання, будь ласка, уточніть деталі.\n\n2025-08-05 11:08:38.113263\nQ: Привіт, розкажи про патерни, основні в python\nA: Привіт! Патерни проектування — це загальноприйняті рішення для типових задач в програмуванні. У Python часто використовуються такі основні патерни:
+
+1. **Singleton** — забезпечує існування тільки одного екземпляра класу.
+   ```python
+   class Singleton:
+       _instance = None
+
+       def __new__(cls, *args, **kwargs):
+           if not cls._instance:
+               cls._instance = super().__new__(cls, *args, **kwargs)
+           return cls._instance
+   ```
+
+2. **Factory Method** — створення об'єктів без вказання конкретного класу об'єкта.
+   ```python
+   class AnimalFactory:
+       @staticmethod
+       def create_animal(type):
+           if type == "dog":
+               return Dog()
+           elif type == "cat":
+               return Cat()
+   ```
+
+3. **Observer** — спостерігачі, що реагують на зміну стану об'єкта.
+   ```python
+   class Subject:
+       def __init__(self):
+           self._observers = []
+
+       def attach(self, observer):
+           self._observers.append(observer)
+
+       def notify(self, message):
+           for observer in self._observers:
+               observer.update(message)
+
+   class Observer:
+       def update(self, message):
+           print(f"Received: {message}")
+   ```
+
+4. **Decorator** — додає нові функціональні можливості об'єктам динамічно.
+   ```python
+   def uppercase_decorator(func):
+       def wrapper():
+           result = func()
+           return result.upper()
+       return wrapper
+
+   @uppercase_decorator
+   def greet():
+       return "hello"
+   ```
+
+Це лише декілька прикладів. Є багато інших патернів, які можуть бути корисними в залежності від конкретного завдання.\n\n2025-08-05 11:10:30.723283\nQ: А можеш мені розказати про Рестапі, будь ласка?\nA: REST API (Representational State Transfer Application Programming Interface) — це архітектурний стиль для розробки веб-сервісів, що використовує HTTP запити для доступу до даних та виконання операцій (таких як GET, POST, PUT, DELETE) над ними. REST API працює через маніпулювання ресурсами, які представлені URL-адресами.
+
+Ключові принципи REST включають:
+
+1. **Клієнт-серверна архітектура**: розділення інтерфейсу користувача від зберігання даних, що дозволяє покращити масштабованість.
+2. **Стан без збереження (Stateless)**: кожен запит від клієнта до сервера повинен містити всю інформацію, необхідну для зрозуміння запиту.
+3. **Кешування**: відповіді можуть бути закешовані на стороні клієнта, щоб зменшити навантаження на сервер.
+4. **Уніфікований інтерфейс**: однаковий спосіб взаємодії з ресурсами.
+
+Приклад взаємодії з REST API на Python за допомогою бібліотеки `requests`:
+
+```python
+import requests
+
+# Виконання GET запиту до API
+response = requests.get('https://api.example.com/resource')
+print(response.json())  # Вивід JSON відповіді API
+
+# Виконання POST запиту до API
+data = {'name': 'Example', 'description': 'This is a test resource.'}
+response = requests.post('https://api.example.com/resource', json=data)
+print(response.status_code)  # Вивід статусу відповіді
+```
+
+Цей приклад демонструє, як можна отримувати дані (`GET`) та створювати нові ресурси (`POST`) за допомогою REST API.\n\n

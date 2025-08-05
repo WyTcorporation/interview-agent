@@ -18,6 +18,9 @@ CHANNELS = 1
 LANG_CODE = "ru"  # або 'en', 'pl', 'ru' і т.д.
 VOICE_NAME = "Irina"
 
+# Цей клас для запису голосом питань в вигляді програми поверх всіх вікон
+
+
 class OverlayAssistant:
     def __init__(self):
         self.root = tk.Tk()
