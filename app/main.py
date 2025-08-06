@@ -1,4 +1,6 @@
 import sys
+from dbm import sqlite3
+
 from fastapi import FastAPI, UploadFile, File, Form, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,11 +14,16 @@ import json
 from pathlib import Path
 from pydantic import BaseModel
 import subprocess
+from db.db_start import init_db, log_to_db, DB_PATH
+
+init_db()
 
 LOG_PATH = Path("history.json")
 LOG_PATH.touch(exist_ok=True)
 
 client = get_openai_client()
+
+MODE_PROMPT = "short"
 
 def append_log(question, answer, source="mic"):
     log = []
@@ -54,6 +61,7 @@ async def ask_audio(file: UploadFile = File(...)):
     question = transcribe_audio(client, audio_bytes)
     answer = get_answer(client, question)
     append_log(question, answer, source="mic")
+    log_to_db(question, answer, source="mic", model="gpt-4o", mode=MODE_PROMPT)
     return JSONResponse({"question": question, "answer": answer})
 
 @app.post("/ask/audio")
@@ -62,6 +70,7 @@ async def ask_audio(file: UploadFile = File(...)):
     question = transcribe_audio(client, audio_bytes)
     answer = get_answer(client, question)
     append_log(question, answer, source="mic")
+    log_to_db(question, answer, source="mic", model="gpt-4o", mode=MODE_PROMPT)
     return JSONResponse({"question": question, "answer": answer})
 
 class TextRequest(BaseModel):
@@ -72,6 +81,7 @@ async def ask_text(body: TextRequest):
     question = body.text.strip()
     answer = get_answer(client, question)
     append_log(question, answer, source="text")
+    log_to_db(question, answer, source="text", model="gpt-4o", mode=MODE_PROMPT)
     return JSONResponse({"question": question, "answer": answer})
 
 @app.post("/reset")
@@ -130,6 +140,7 @@ class ScreenImageRequest(BaseModel):
 async def screen_analyze(req: ScreenImageRequest):
     answer = get_answer_with_image(client, req.prompt, req.image_b64)
     append_log(req.prompt, answer, source="screen")
+    log_to_db(req.prompt, answer, source="screen", model="gpt-4o", mode=MODE_PROMPT)
     return {"question": req.prompt, "answer": answer}
 
 PROMPTS_PATH = Path("app/prompts.json")
@@ -142,10 +153,10 @@ def load_prompts():
         return {}
 @app.post("/mode")
 async def set_mode(mode: str = Body(...)):
+    global MODE_PROMPT
+    MODE_PROMPT = mode
     global current_mode_prompt
-
     prompts = load_prompts()
-
     if mode in prompts:
         current_mode_prompt = prompts[mode]
         return {"status": "ok", "mode": mode}
@@ -195,3 +206,15 @@ async def get_latest():
         except Exception:
             pass
     return {"question": "", "answer": "❌ Немає відповіді"}
+
+
+@app.get("/analytics/questions_per_day")
+def questions_per_day():
+    with sqlite3.connect(DB_PATH) as conn:
+        rows = conn.execute('''
+            SELECT DATE(timestamp) as day, COUNT(*) 
+            FROM history 
+            GROUP BY day 
+            ORDER BY day DESC
+        ''').fetchall()
+    return [{"day": row[0], "count": row[1]} for row in rows]

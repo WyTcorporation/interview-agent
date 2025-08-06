@@ -1,3 +1,4 @@
+import subprocess
 import tkinter as tk
 import sounddevice as sd
 import soundfile as sf
@@ -42,6 +43,10 @@ class OverlayAssistant:
         self.button_frame = tk.Frame(self.root, bg="black")
         self.button_frame.pack(pady=(0, 10))
 
+        self.screen_button = tk.Button(self.button_frame, text="🖼 Аналіз екрана", command=self.run_screen_headless,
+                                       font=("Segoe UI", 9), bg="gray20", fg="white")
+        self.screen_button.pack(side="left", padx=5)
+
         self.tts_button = tk.Button(self.button_frame, text="🔈 Озвучити", command=self.speak_text,
                                     font=("Segoe UI", 9), bg="gray20", fg="white")
         self.tts_button.pack(side="left", padx=5)
@@ -60,6 +65,11 @@ class OverlayAssistant:
         threading.Thread(target=self.listen_hotkey_loop, daemon=True).start()
 
         self.root.geometry("+60+60")
+
+        self.hidden = False
+
+        self.screen_recording = False
+        self.screen_audio_frames = []
 
     def pick_voice(self, lang_code, voice_name=""):
         voices = self.engine.getProperty("voices")
@@ -82,14 +92,106 @@ class OverlayAssistant:
 
     def listen_hotkey_loop(self):
         self.text_label.config(text="🎙 Тримай F9 щоб говорити | Ctrl+F9 — озвучити")
+        keyboard.add_hotkey("F8", self.run_screen_headless)
         keyboard.add_hotkey("ctrl+F9", self.speak_text)
-
+        keyboard.add_hotkey("F11", self.toggle_visibility)
         while True:
-            keyboard.wait("F9")
-            self.start_recording()
-            while keyboard.is_pressed("F9"):
-                time.sleep(0.1)
-            self.stop_and_send()
+            if keyboard.is_pressed("F9"):
+                self.start_recording()
+                while keyboard.is_pressed("F9"):
+                    time.sleep(0.1)
+                self.stop_and_send()
+
+            elif keyboard.is_pressed("F10"):
+                self.start_screen_recording()
+                while keyboard.is_pressed("F10"):
+                    time.sleep(0.1)
+                self.stop_and_send_screen()
+
+            time.sleep(0.05)
+
+    def run_screen_headless(self):
+        self.text_label.config(text="📸 Аналіз екрана...")
+        self.root.lift()
+        self.root.update()
+
+        try:
+            output = subprocess.check_output(
+                ["python", "screen_headless.py"],
+                stderr=subprocess.STDOUT,
+                encoding="utf-8"  # <— важливо
+            ).strip()
+
+            if "✅ Відповідь:" in output:
+                answer = output.split("✅ Відповідь:")[-1].strip()
+                self.last_answer = answer
+                self.text_label.config(text=f"🧠 {answer}")
+            elif output:
+                self.text_label.config(text=output)
+            else:
+                self.text_label.config(text="⚠️ Порожня відповідь від screen_headless")
+
+        except subprocess.CalledProcessError as e:
+            self.text_label.config(text=f"❌ Помилка запуску: {e.output.strip()}")
+        except Exception as e:
+            self.text_label.config(text=f"⚠️ Виняток: {e}")
+
+    def toggle_visibility(self):
+        if self.hidden:
+            self.root.deiconify()
+            self.hidden = False
+        else:
+            self.root.withdraw()
+            self.hidden = True
+
+    def start_screen_recording(self):
+        if self.screen_recording:
+            return
+        self.text_label.config(text="🔊 Запис звуку з екрана...")
+        self.root.lift()
+        self.root.update()
+        self.screen_audio_frames = []
+        self.screen_recording = True
+        threading.Thread(target=self._screen_record_loop, daemon=True).start()
+
+    def _screen_record_loop(self):
+        try:
+            with sd.InputStream(samplerate=48000, channels=1, dtype='int16') as stream:
+                while self.screen_recording:
+                    data, _ = stream.read(1024)
+                    self.screen_audio_frames.append(data.copy())
+        except Exception as e:
+            self.text_label.config(text=f"⚠️ Екран запис — помилка: {e}")
+            self.screen_recording = False
+
+    def stop_and_send_screen(self):
+        if not self.screen_recording:
+            return
+        self.screen_recording = False
+        self.text_label.config(text="⏳ Обробка звуку з екрана...")
+        self.root.update()
+
+        if not self.screen_audio_frames:
+            self.text_label.config(text="⚠️ Нічого не записано з екрана")
+            return
+
+        audio_np = np.concatenate(self.screen_audio_frames, axis=0)
+        filename = f"screen_{uuid.uuid4().hex}.wav"
+        sf.write(filename, audio_np, samplerate=48000)
+
+        try:
+            with open(filename, "rb") as f:
+                response = requests.post(API_URL, files={"file": f})
+            if response.status_code == 200:
+                self.last_answer = response.json().get("answer", "🤖 Нема відповіді")
+                self.text_label.config(text=f"🧠 {self.last_answer}")
+            else:
+                self.text_label.config(text=f"❌ Статус: {response.status_code}")
+        except Exception as e:
+            self.text_label.config(text=f"⚠️ Помилка: {e}")
+        finally:
+            if os.path.exists(filename):
+                os.remove(filename)
 
     def start_recording(self):
         if self.recording:
