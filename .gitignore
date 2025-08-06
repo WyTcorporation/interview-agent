@@ -3,3 +3,5 @@
 /recordings/
 /.venv/
 /screenshot.jpg
+/agent_history.db
+/docs/
