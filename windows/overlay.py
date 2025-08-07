@@ -37,7 +37,7 @@ class OverlayAssistant:
         self.voice = self.pick_voice(LANG_CODE, VOICE_NAME)
 
         self.text_label = tk.Label(self.root, text="🎙 Тримай F9 щоб говорити | Ctrl+F9 — озвучити", font=("Segoe UI", 11),
-                                   bg="black", fg="lime", wraplength=300, justify="left")
+                                   bg="black", fg="lime", wraplength=800, justify="left")
         self.text_label.pack(padx=10, pady=(10, 5))
 
         self.button_frame = tk.Frame(self.root, bg="black")
@@ -102,13 +102,63 @@ class OverlayAssistant:
                     time.sleep(0.1)
                 self.stop_and_send()
 
+            # elif keyboard.is_pressed("F10"):
+            #     self.start_screen_recording()
+            #     while keyboard.is_pressed("F10"):
+            #         time.sleep(0.1)
+            #     self.stop_and_send_screen()
+
             elif keyboard.is_pressed("F10"):
-                self.start_screen_recording()
+                self.start_ffmpeg_recording()
                 while keyboard.is_pressed("F10"):
                     time.sleep(0.1)
-                self.stop_and_send_screen()
+                self.stop_and_send_ffmpeg()
 
             time.sleep(0.05)
+
+    def start_ffmpeg_recording(self):
+        self.text_label.config(text="🔴 FFMPEG запис активний... Відпустіть F7 щоб відправити")
+        self.root.lift()
+        self.root.update()
+        self.ffmpeg_filename = f"temp_{uuid.uuid4().hex}.wav"
+        self.ffmpeg_proc = subprocess.Popen([
+            "ffmpeg",
+            "-f", "dshow",
+            "-i", "audio=CABLE Output (VB-Audio Virtual Cable)",
+            "-acodec", "pcm_s16le",
+            "-ar", "48000",
+            "-ac", "1",
+            self.ffmpeg_filename
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def stop_and_send_ffmpeg(self):
+        if not hasattr(self, "ffmpeg_proc"):
+            return
+        self.text_label.config(text="⏳ Завершення ffmpeg запису...")
+        try:
+            self.ffmpeg_proc.communicate(timeout=2)
+        except subprocess.TimeoutExpired:
+            self.ffmpeg_proc.terminate()
+        time.sleep(0.5)
+
+        if not os.path.exists(self.ffmpeg_filename):
+            self.text_label.config(text="⚠️ Файл не записано")
+            return
+
+        self.text_label.config(text="📤 Відправка (ffmpeg)...")
+        try:
+            with open(self.ffmpeg_filename, "rb") as f:
+                response = requests.post(API_URL, files={"file": f})
+            if response.status_code == 200:
+                self.last_answer = response.json().get("answer", "🤖 Нема відповіді")
+                self.text_label.config(text=f"🧠 {self.last_answer}")
+            else:
+                self.text_label.config(text=f"❌ Статус: {response.status_code}")
+        except Exception as e:
+            self.text_label.config(text=f"⚠️ Помилка: {e}")
+        finally:
+            if os.path.exists(self.ffmpeg_filename):
+                os.remove(self.ffmpeg_filename)
 
     def run_screen_headless(self):
         self.text_label.config(text="📸 Аналіз екрана...")

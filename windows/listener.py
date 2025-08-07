@@ -26,7 +26,7 @@ else:
     print("❌ Не знайдено CABLE Output через WASAPI")
     exit(1)
 
-def record_audio(duration=5, samplerate=48000):
+def record_audio(duration=2, samplerate=48000):
     print("🎙️  Recording...")
     audio = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1, dtype='int16')
     sd.wait()
@@ -48,4 +48,4 @@ def send_audio_to_api(filename):
 while True:
     fname = record_audio()
     send_audio_to_api(fname)
-    time.sleep(1)
+    time.sleep(0.2)
