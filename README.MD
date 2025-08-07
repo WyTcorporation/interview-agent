@@ -4,6 +4,8 @@ pip freeze > requirements.txt
 
 streamlit run .\career_coach_beta.py
 
+ pip install .\sentencepiece-0.2.1-cp313-cp313-win_amd64.whl
+
 # У файлі .env заміни `your-openai-key-here` на свій ключ
 
 uvicorn app.main:app --reload
