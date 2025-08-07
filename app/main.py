@@ -1,3 +1,4 @@
+import os
 import sys
 from dbm import sqlite3
 
@@ -15,6 +16,7 @@ from pathlib import Path
 from pydantic import BaseModel
 import subprocess
 from db.db_start import init_db, log_to_db, DB_PATH
+from windows.diarization import save_temp_wav, extract_questions_from_diarization
 
 init_db()
 
@@ -218,3 +220,33 @@ def questions_per_day():
             ORDER BY day DESC
         ''').fetchall()
     return [{"day": row[0], "count": row[1]} for row in rows]
+
+@app.post("/ask/audio")
+async def ask_audio(file: UploadFile = File(...)):
+    audio_bytes = await file.read()
+
+    # ✨ Зберігаємо тимчасово
+    temp_path = save_temp_wav(audio_bytes)
+
+    try:
+        # 🔍 Diarize
+        questions = extract_questions_from_diarization(temp_path)
+
+        if not questions:
+            questions = ["(не знайдено питань або не вдалося розпізнати)"]
+
+        # 🤖 GPT відповіді
+        answers = [get_answer(client, q) for q in questions]
+
+        full_question = "\n\n".join(questions)
+        full_answer = "\n\n".join(answers)
+
+        # 🧾 логування
+        append_log(full_question, full_answer, source="mic")
+        log_to_db(full_question, full_answer, source="mic", model="gpt-4o", mode=MODE_PROMPT)
+
+        return JSONResponse({"question": full_question, "answer": full_answer})
+
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
