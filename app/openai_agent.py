@@ -6,14 +6,44 @@ from PIL import ImageGrab
 
 session_messages = []
 
+_current_lang_code = "uk-UA"
+
+_LANG_NAME_BY_CODE = {
+    "en-US": "English",
+    "uk-UA": "Ukrainian",
+    "pl-PL": "Polish",
+    "ru-RU": "Russian",
+}
 
 current_mode_prompt = "Дай коротку відповідь і приклад з коду (якщо доречно)."
 
+def set_language(lang_code: str):
+    global _current_lang_code
+    if lang_code in _LANG_NAME_BY_CODE:
+        _current_lang_code = lang_code
+
+def get_language_name() -> str:
+    return _LANG_NAME_BY_CODE.get(_current_lang_code, "Ukrainian")
+
+# def get_system_prompt():
+#     return {
+#         "role": "system",
+#         "content": (
+#             f"Ти AI-асистент. {current_mode_prompt} "
+#             "Відповідай на питання користувача."
+#         )
+#     }
+
 def get_system_prompt():
+    lang_name = get_language_name()
     return {
         "role": "system",
         "content": (
+            # твій режимний prompt
             f"Ти AI-асистент. {current_mode_prompt} "
+            # === NEW: інструкція мовою
+            f"Always answer in {lang_name}. If the user switches languages, "
+            f"still respond in {lang_name} unless explicitly asked otherwise."
             "Відповідай на питання користувача."
         )
     }

@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let audioChunks = [];
     let currentHistory = [];
 
+
     function renderAnswerMarkdown(rawText) {
         const answerHtml = marked.parse(rawText || "");
         answerEl.innerHTML = `<div class="rendered-answer">${answerHtml}</div>`;
@@ -52,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
+        formData.append("lang", selectedLang);
 
         questionEl.innerText = "⌛ Обробка...";
         answerEl.innerText = "";
@@ -101,6 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const audioBlob = new Blob(audioChunks, {type: "audio/webm"});
         const formData = new FormData();
         formData.append("file", audioBlob, "recording.webm");
+        formData.append("lang", selectedLang);
 
         if (audioBlob.size < 1128) {
             answerEl.innerText = "⚠️ Аудіо занадто коротке або порожнє!";
@@ -134,11 +137,11 @@ document.addEventListener("DOMContentLoaded", () => {
           <div><strong>Q:</strong> ${entry.question}</div>
           <div><strong>A:</strong><div class="rendered-answer">${answerHtml}</div></div>
         `;
-             if (typeof hljs !== "undefined") {
-                 block.querySelectorAll("pre code").forEach((el) => {
-                     hljs.highlightElement(el);
-                 });
-             }
+            if (typeof hljs !== "undefined") {
+                block.querySelectorAll("pre code").forEach((el) => {
+                    hljs.highlightElement(el);
+                });
+            }
             historyContainer.appendChild(block);
         });
     }
@@ -166,10 +169,22 @@ document.addEventListener("DOMContentLoaded", () => {
     let ttsEnabled = false;
     let selectedLang = "en-US";
 
+
     const langSelect = document.getElementById("voice-lang-select");
-    langSelect.addEventListener("change", () => {
+    langSelect.addEventListener("change", async () => {
         selectedLang = langSelect.value;
-        localStorage.setItem("ttsLang", selectedLang); // зберігаємо в локалсторедж
+        localStorage.setItem("ttsLang", selectedLang);
+
+        // (опційно) повідомити бекенд глобально
+        try {
+            await fetch("/lang", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({lang: selectedLang})
+            });
+        } catch (e) {
+            console.warn("Failed to set /lang:", e);
+        }
     });
 
     if (localStorage.getItem("ttsLang")) {
@@ -237,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({text})
+            body: JSON.stringify({text, lang: selectedLang})
         });
 
         const data = await response.json();

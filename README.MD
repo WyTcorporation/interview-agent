@@ -35,3 +35,9 @@ Slack +
 🔌 Локальний LLM через Ollama
 🧠 KaiAgentOS інтеграція
 🎥 Камера або remote screen capturing
+
+pip install -r requirements.txt
+pip freeze > requirements.txt
+
+docker compose down -v
+docker compose up -d --build

@@ -1,6 +1,5 @@
 import sys
-from dbm import sqlite3
-
+import sqlite3
 from fastapi import FastAPI, UploadFile, File, Form, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,6 +14,7 @@ from pathlib import Path
 from pydantic import BaseModel
 import subprocess
 from db.db_start import init_db, log_to_db, DB_PATH
+from app.openai_agent import set_language
 
 init_db()
 
@@ -24,6 +24,27 @@ LOG_PATH.touch(exist_ok=True)
 client = get_openai_client()
 
 MODE_PROMPT = "short"
+
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+class LangRequest(BaseModel):
+    lang: str
+
+@app.post("/lang")
+async def set_lang(req: LangRequest):
+    set_language(req.lang)
+    return {"status": "ok", "lang": req.lang}
+
 
 def append_log(question, answer, source="mic"):
     log = []
@@ -39,24 +60,14 @@ def append_log(question, answer, source="mic"):
     })
     LOG_PATH.write_text(json.dumps(log[-100:], indent=2))  # зберігаємо останні 100
 
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/ask/file")
-async def ask_file(file: UploadFile = File(...)):
+async def ask_file(file: UploadFile = File(...), lang: str = Form(None)):
+    if lang:
+        set_language(lang)
     audio_bytes = await file.read()
     question = transcribe_audio(client, audio_bytes)
     answer = get_answer(client, question)
@@ -65,7 +76,9 @@ async def ask_file(file: UploadFile = File(...)):
     return JSONResponse({"question": question, "answer": answer})
 
 @app.post("/ask/audio")
-async def ask_audio(file: UploadFile = File(...)):
+async def ask_audio(file: UploadFile = File(...), lang: str = Form(None)):
+    if lang:
+        set_language(lang)
     audio_bytes = await file.read()
     question = transcribe_audio(client, audio_bytes)
     answer = get_answer(client, question)
@@ -75,9 +88,12 @@ async def ask_audio(file: UploadFile = File(...)):
 
 class TextRequest(BaseModel):
     text: str
+    lang: str | None = None
 
 @app.post("/ask/text")
 async def ask_text(body: TextRequest):
+    if body.lang:
+        set_language(body.lang)
     question = body.text.strip()
     answer = get_answer(client, question)
     append_log(question, answer, source="text")
@@ -135,9 +151,12 @@ async def run_screen_tool():
 class ScreenImageRequest(BaseModel):
     image_b64: str
     prompt: str
+    lang: str | None = None
 
 @app.post("/screen/analyze")
 async def screen_analyze(req: ScreenImageRequest):
+    if req.lang:
+        set_language(req.lang)
     answer = get_answer_with_image(client, req.prompt, req.image_b64)
     append_log(req.prompt, answer, source="screen")
     log_to_db(req.prompt, answer, source="screen", model="gpt-4o", mode=MODE_PROMPT)
